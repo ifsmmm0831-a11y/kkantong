@@ -244,7 +244,7 @@
             <input type="file" id="txtUpload" accept=".txt" onchange="handleTextUpload()">
             <div class="helper-text" style="text-align: left;">
                 * 작성 형식:<br>
-                <div class="code-box">나 : 할 말;<br>이름 : 내용 [img:주소];<br>시스템 : 내용;<br>구분선 : 내용;</div>
+                <div class="code-box">나 : 할 말;<br>이름 : 내용 [img:주소];<br>시스템 : 내용;<br>날짜 : 내용;</div>
             </div>
         </div>
 
@@ -281,7 +281,7 @@
             </div>
             <div class="radio-option">
                 <input type="radio" name="msgType" id="typePart" value="part" onchange="toggleInputs()">
-                <label for="typePart">구분선</label>
+                <label for="typePart">날짜</label>
             </div>
         </div>
 
@@ -601,7 +601,7 @@
 
             if (rawName === '나') type = 'my';
             else if (rawName === '시스템') type = 'system';
-            else if (rawName === '구분선') type = 'part';
+            else if (rawName === '날짜') type = 'part';
             
             const imgMatch = rawContent.match(/\[img\s*:\s*(.*?)\s*\]/);
             if (imgMatch) {
@@ -643,7 +643,7 @@
             } else if (el.classList.contains('system-msg')) {
                 line = `시스템 : ${content};`;
             } else if (el.classList.contains('date-divider')) {
-                line = `구분선 : ${content};`;
+                line = `날짜 : ${content};`;
             }
             if(line) text += line + "\n";
         }
@@ -797,3 +797,4 @@
 
 </body>
 </html>
+

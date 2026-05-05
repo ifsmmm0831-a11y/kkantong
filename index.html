@@ -859,12 +859,326 @@
             else{const sh=1200,th=cv.height,pg=Math.ceil(th/sh);for(let i=0;i<pg;i++){const s=document.createElement('canvas');s.width=cv.width;s.height=Math.min(sh,th-i*sh);s.getContext('2d').drawImage(cv,0,i*sh,cv.width,s.height,0,0,cv.width,s.height);const a=document.createElement('a');a.download=`chat_part_${i+1}.png`;a.href=s.toDataURL();a.click();}showToast(`📱 ${pg}장 저장!`,'success');}
         }).catch(e=>{if(cl.parentNode)document.body.removeChild(cl);showToast('이미지 실패','error');console.error(e);});
     }
+    // HTML 문자열을 보기 좋게 들여쓰기로 정리
+    function formatHtml(html){
+        const voidTags=new Set(['area','base','br','col','embed','hr','img','input','link','meta','param','source','track','wbr']);
+        // 태그 사이의 의미 없는 공백 제거 (단, 태그 사이에 텍스트가 있으면 보존)
+        let s=html.replace(/>\s+</g,'><');
+        // 태그를 한 줄에 하나씩 분리
+        s=s.replace(/(<\/?[^>]+>)/g,'\n$1\n').replace(/\n+/g,'\n').trim();
+        const lines=s.split('\n');
+        let depth=0;
+        const indent='  ';
+        const out=[];
+        for(let line of lines){
+            line=line.trim();
+            if(!line)continue;
+            // 닫는 태그면 먼저 depth 감소
+            if(/^<\//.test(line)){
+                depth=Math.max(0,depth-1);
+                out.push(indent.repeat(depth)+line);
+            }
+            // 자기 종결/void 태그
+            else if(/^<[^>]+\/>$/.test(line)||(/^<(\w+)/.test(line)&&voidTags.has(line.match(/^<(\w+)/)[1].toLowerCase()))){
+                out.push(indent.repeat(depth)+line);
+            }
+            // 여는 태그
+            else if(/^</.test(line)){
+                out.push(indent.repeat(depth)+line);
+                depth++;
+            }
+            // 텍스트
+            else{
+                out.push(indent.repeat(depth)+line);
+            }
+        }
+        return out.join('\n');
+    }
+
     function copyHtml(){
         const c=els.phone.cloneNode(true);c.querySelectorAll('.btn-msg-delete,.editing').forEach(k=>k.remove());c.classList.remove('editing');
         const ib=els.chkBorder.checked,ic=els.theme.value==='theme-custom';let bc='#333';if(ic)bc=$('customBorderCol').value;
         c.style.border=ib?`8px solid ${bc}`:'none';if(ib){c.style.borderRadius='30px';c.style.backgroundColor='#fff';c.style.boxShadow='0 5px 15px rgba(0,0,0,0.1)';}else{c.style.borderRadius='0';c.style.backgroundColor='transparent';c.style.boxShadow='none';}
         const a=c.querySelector('.chat-area');if(a){a.classList.remove('scroll-mode');a.style.maxHeight='';a.style.overflow='';}
-        const full=`<!DOCTYPE html><html lang="ko"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"><title>Chat</title><style>@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&display=swap');body{background:#f0f2f5;margin:0;padding:20px;display:flex;justify-content:center;min-height:100vh;font-family:'Noto Sans KR',sans-serif}.phone-container{box-sizing:border-box;width:${$('phoneWidth').value}px;max-width:100%;margin:0 auto;overflow:hidden;background:#fff}.header{padding:15px;text-align:center;font-weight:bold;font-size:1.1rem}.chat-area-wrap{position:relative;overflow:hidden}.chat-bg-layer{position:absolute;top:0;left:0;right:0;bottom:0;background-size:cover;background-position:center;z-index:0}.chat-bg-overlay{position:absolute;top:0;left:0;right:0;bottom:0;z-index:1}.chat-area{position:relative;z-index:2;padding:20px;display:flex;flex-direction:column;gap:10px;min-height:500px}.msg-wrapper{display:flex;align-items:flex-end;gap:8px;max-width:85%;width:fit-content;margin-bottom:5px;position:relative}.msg-content-col{display:flex;flex-direction:column;min-width:0;flex:1}.msg-avatar{border-radius:50%;flex-shrink:0;background:#ddd;background-size:cover;background-position:center;display:flex;align-items:center;justify-content:center;font-size:.7rem;font-weight:bold;color:#fff;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,.15)}.msg-avatar img{width:100%;height:100%;object-fit:cover}.message{padding:10px 14px;font-size:.95rem;line-height:1.5;border-radius:15px;position:relative;word-break:break-all;box-shadow:0 1px 1px rgba(0,0,0,.1);white-space:pre-wrap}.main-text,.hover-text{display:flex;flex-direction:column}.msg-image{max-width:100%;border-radius:10px;margin-bottom:8px;display:block}.name-tag{font-size:.75rem;margin-bottom:4px;margin-left:2px;opacity:.8}.date-divider{text-align:center;margin:15px 0}.date-divider span{background:rgba(0,0,0,.1);color:#fff;padding:4px 12px;border-radius:12px;font-size:.75rem}.system-msg{text-align:center;color:#888;font-size:.8rem;margin:10px 0;font-style:italic;white-space:pre-wrap}.message .hover-text{display:none}.has-hidden-content .message{cursor:help}.has-hidden-content .message:hover .main-text,.has-hidden-content .message:active .main-text{display:none}.has-hidden-content .message:hover .hover-text,.has-hidden-content .message:active .hover-text{display:flex;animation:fadeIn .2s}@keyframes fadeIn{from{opacity:0}to{opacity:1}}.my-msg-wrapper .message::after{content:'';position:absolute;bottom:10px;right:-6px;border-top:0 solid transparent;border-bottom:10px solid transparent;border-left:10px solid}.other-msg-wrapper .message::after{content:'';position:absolute;bottom:10px;left:-6px;border-top:0 solid transparent;border-bottom:10px solid transparent;border-right:10px solid}.phone-container.bubble-round .message{border-radius:20px!important}.phone-container.bubble-round .my-msg-wrapper .message{border-bottom-right-radius:4px!important}.phone-container.bubble-round .other-msg-wrapper .message{border-bottom-left-radius:4px!important}.phone-container.bubble-square .message{border-radius:4px!important}.phone-container.bubble-cloud .message{border-radius:18px!important;box-shadow:0 2px 8px rgba(0,0,0,.08)!important}.phone-container.bubble-cloud .message::after,.phone-container.bubble-flat .message::after,.phone-container.bubble-pill .message::after,.phone-container.no-tail .message::after{display:none!important}.phone-container.bubble-flat .message{border-radius:2px!important;box-shadow:none!important;border:1px solid rgba(0,0,0,.1)!important}.phone-container.bubble-pill .message{border-radius:25px!important;padding:10px 18px!important}.phone-container.bubble-custom .message{border-radius:var(--bubble-radius,15px)!important;padding:var(--bubble-pad-v,10px) var(--bubble-pad-h,14px)!important;box-shadow:var(--bubble-shadow,0 1px 1px rgba(0,0,0,.1))!important;border:var(--bubble-border,none)!important}.phone-container.bubble-custom .my-msg-wrapper .message{border-bottom-right-radius:var(--bubble-my-corner,0)!important}.phone-container.bubble-custom .other-msg-wrapper .message{border-bottom-left-radius:var(--bubble-other-corner,0)!important}.phone-container.theme-custom .header{background:var(--header-bg,#6c5ce7)!important;color:var(--header-txt,#fff)!important}.phone-container.theme-custom .chat-bg-layer{background-color:var(--chat-bg,#e9e9f3)!important}.phone-container.theme-custom .my-msg-wrapper{align-self:flex-end}.phone-container.theme-custom .my-msg-wrapper .message{background:var(--my-bg,#6c5ce7)!important;color:var(--my-txt,#fff)!important}.phone-container.theme-custom .my-msg-wrapper .message::after{border-left-color:var(--my-bg,#6c5ce7)!important}.phone-container.theme-custom .other-msg-wrapper{align-self:flex-start}.phone-container.theme-custom .other-msg-wrapper .message{background:var(--other-bg,#fff)!important;color:var(--other-txt,#333)!important}.phone-container.theme-custom .other-msg-wrapper .message::after{border-right-color:var(--other-bg,#fff)!important}.phone-container.theme-custom .name-tag{color:var(--name-txt,#555)!important}.phone-container.theme-custom .system-msg{color:var(--system-txt,#888)!important}.phone-container.theme-custom .date-divider span{color:var(--date-txt,#fff)!important;background:var(--date-bg,rgba(0,0,0,.1))!important}.theme-default .header{background:#6c5ce7;color:#fff}.theme-default .chat-bg-layer{background:#e9e9f3}.theme-default .my-msg-wrapper{align-self:flex-end}.theme-default .my-msg-wrapper .message{background:#6c5ce7;color:#fff;border-bottom-right-radius:0}.theme-default .my-msg-wrapper .message::after{border-left-color:#6c5ce7}.theme-default .other-msg-wrapper{align-self:flex-start}.theme-default .other-msg-wrapper .message{background:#fff;color:#333;border-bottom-left-radius:0}.theme-default .other-msg-wrapper .message::after{border-right-color:#fff}.theme-kakao .header{background:#A9BDCE;color:#333}.theme-kakao .chat-bg-layer{background:#b2c7d9}.theme-kakao .my-msg-wrapper{align-self:flex-end}.theme-kakao .my-msg-wrapper .message{background:#ffeb3b;color:#333;border-radius:4px;border-bottom-right-radius:0}.theme-kakao .my-msg-wrapper .message::after{border-left-color:#ffeb3b}.theme-kakao .other-msg-wrapper{align-self:flex-start}.theme-kakao .other-msg-wrapper .message{background:#fff;color:#333;border-radius:4px;border-bottom-left-radius:0}.theme-kakao .other-msg-wrapper .message::after{border-right-color:#fff}.theme-line .header{background:#2c3e50;color:#fff}.theme-line .chat-bg-layer{background:#7289DA}.theme-line .my-msg-wrapper{align-self:flex-end}.theme-line .my-msg-wrapper .message{background:#85E249;color:#333;border-bottom-right-radius:0}.theme-line .my-msg-wrapper .message::after{border-left-color:#85E249}.theme-line .other-msg-wrapper{align-self:flex-start}.theme-line .other-msg-wrapper .message{background:#fff;color:#333;border-bottom-left-radius:0}.theme-line .other-msg-wrapper .message::after{border-right-color:#fff}.theme-mono .header{background:#222;color:#fff}.theme-mono .chat-bg-layer{background:#f5f5f5}.theme-mono .my-msg-wrapper{align-self:flex-end}.theme-mono .my-msg-wrapper .message{background:#333;color:#fff;border-radius:0}.theme-mono .my-msg-wrapper .message::after{border-left-color:#333}.theme-mono .other-msg-wrapper{align-self:flex-start}.theme-mono .other-msg-wrapper .message{background:#fff;color:#333;border:1px solid #ccc;border-radius:0}.theme-mono .other-msg-wrapper .message::after{border-right-color:#fff}</style></head><body>${c.outerHTML}</body></html>`;
+
+        // 보기 좋은 CSS
+        const css = `@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&display=swap');
+
+body {
+  background: #f0f2f5;
+  margin: 0;
+  padding: 20px;
+  display: flex;
+  justify-content: center;
+  min-height: 100vh;
+  font-family: 'Noto Sans KR', sans-serif;
+}
+
+/* ===== 폰 컨테이너 ===== */
+.phone-container {
+  box-sizing: border-box;
+  width: ${$('phoneWidth').value}px;
+  max-width: 100%;
+  margin: 0 auto;
+  overflow: hidden;
+  background: #fff;
+}
+
+/* ===== 헤더 ===== */
+.header {
+  padding: 15px;
+  text-align: center;
+  font-weight: bold;
+  font-size: 1.1rem;
+  border-top-left-radius: 22px;
+  border-top-right-radius: 22px;
+}
+.phone-container[style*="border:none"] .header,
+.phone-container[style*="border: none"] .header { border-radius: 0; }
+
+/* ===== 채팅 영역 ===== */
+.chat-area-wrap {
+  position: relative;
+  overflow: hidden;
+  border-bottom-left-radius: 22px;
+  border-bottom-right-radius: 22px;
+}
+.phone-container[style*="border:none"] .chat-area-wrap,
+.phone-container[style*="border: none"] .chat-area-wrap { border-radius: 0; }
+
+.chat-bg-layer {
+  position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+  background-size: cover; background-position: center;
+  z-index: 0;
+  border-bottom-left-radius: 22px;
+  border-bottom-right-radius: 22px;
+}
+.chat-bg-overlay {
+  position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+  z-index: 1;
+  border-bottom-left-radius: 22px;
+  border-bottom-right-radius: 22px;
+}
+.chat-area {
+  position: relative;
+  z-index: 2;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-height: 500px;
+  border-bottom-left-radius: 22px;
+  border-bottom-right-radius: 22px;
+}
+
+/* ===== 메시지 ===== */
+.msg-wrapper {
+  display: flex;
+  align-items: flex-end;
+  gap: 8px;
+  max-width: 85%;
+  width: fit-content;
+  margin-bottom: 5px;
+  position: relative;
+}
+.msg-content-col { display: flex; flex-direction: column; min-width: 0; flex: 1; }
+
+.msg-avatar {
+  border-radius: 50%;
+  flex-shrink: 0;
+  background: #ddd;
+  background-size: cover;
+  background-position: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: .7rem;
+  font-weight: bold;
+  color: #fff;
+  overflow: hidden;
+  box-shadow: 0 1px 3px rgba(0,0,0,.15);
+}
+.msg-avatar img { width: 100%; height: 100%; object-fit: cover; }
+
+.message {
+  padding: 10px 14px;
+  font-size: .95rem;
+  line-height: 1.5;
+  border-radius: 15px;
+  position: relative;
+  word-break: break-all;
+  box-shadow: 0 1px 1px rgba(0,0,0,.1);
+  white-space: pre-wrap;
+}
+.main-text, .hover-text { display: flex; flex-direction: column; }
+
+.msg-image { max-width: 100%; border-radius: 10px; margin-bottom: 8px; display: block; }
+
+.name-tag { font-size: .75rem; margin-bottom: 4px; margin-left: 2px; opacity: .8; }
+
+.date-divider { text-align: center; margin: 15px 0; }
+.date-divider span {
+  background: rgba(0,0,0,.1);
+  color: #fff;
+  padding: 4px 12px;
+  border-radius: 12px;
+  font-size: .75rem;
+}
+
+.system-msg {
+  text-align: center;
+  color: #888;
+  font-size: .8rem;
+  margin: 10px 0;
+  font-style: italic;
+  white-space: pre-wrap;
+}
+
+/* ===== 마우스 호버 시 텍스트 변경 ===== */
+.message .hover-text { display: none; }
+.has-hidden-content .message { cursor: help; }
+.has-hidden-content .message:hover .main-text,
+.has-hidden-content .message:active .main-text { display: none; }
+.has-hidden-content .message:hover .hover-text,
+.has-hidden-content .message:active .hover-text { display: flex; animation: fadeIn .2s; }
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+/* ===== 말풍선 꼬리 ===== */
+.my-msg-wrapper .message::after {
+  content: '';
+  position: absolute;
+  bottom: 10px; right: -6px;
+  border-top: 0 solid transparent;
+  border-bottom: 10px solid transparent;
+  border-left: 10px solid;
+}
+.other-msg-wrapper .message::after {
+  content: '';
+  position: absolute;
+  bottom: 10px; left: -6px;
+  border-top: 0 solid transparent;
+  border-bottom: 10px solid transparent;
+  border-right: 10px solid;
+}
+
+/* ===== 말풍선 모양 ===== */
+.phone-container.bubble-round .message { border-radius: 20px !important; }
+.phone-container.bubble-round .my-msg-wrapper .message { border-bottom-right-radius: 4px !important; }
+.phone-container.bubble-round .other-msg-wrapper .message { border-bottom-left-radius: 4px !important; }
+.phone-container.bubble-square .message { border-radius: 4px !important; }
+.phone-container.bubble-cloud .message {
+  border-radius: 18px !important;
+  box-shadow: 0 2px 8px rgba(0,0,0,.08) !important;
+}
+.phone-container.bubble-cloud .message::after,
+.phone-container.bubble-flat .message::after,
+.phone-container.bubble-pill .message::after,
+.phone-container.no-tail .message::after { display: none !important; }
+.phone-container.bubble-flat .message {
+  border-radius: 2px !important;
+  box-shadow: none !important;
+  border: 1px solid rgba(0,0,0,.1) !important;
+}
+.phone-container.bubble-pill .message {
+  border-radius: 25px !important;
+  padding: 10px 18px !important;
+}
+.phone-container.bubble-custom .message {
+  border-radius: var(--bubble-radius, 15px) !important;
+  padding: var(--bubble-pad-v, 10px) var(--bubble-pad-h, 14px) !important;
+  box-shadow: var(--bubble-shadow, 0 1px 1px rgba(0,0,0,.1)) !important;
+  border: var(--bubble-border, none) !important;
+}
+.phone-container.bubble-custom .my-msg-wrapper .message { border-bottom-right-radius: var(--bubble-my-corner, 0) !important; }
+.phone-container.bubble-custom .other-msg-wrapper .message { border-bottom-left-radius: var(--bubble-other-corner, 0) !important; }
+
+/* ===== 커스텀 테마 ===== */
+.phone-container.theme-custom .header {
+  background: var(--header-bg, #6c5ce7) !important;
+  color: var(--header-txt, #fff) !important;
+}
+.phone-container.theme-custom .chat-bg-layer { background-color: var(--chat-bg, #e9e9f3) !important; }
+.phone-container.theme-custom .my-msg-wrapper { align-self: flex-end; }
+.phone-container.theme-custom .my-msg-wrapper .message {
+  background: var(--my-bg, #6c5ce7) !important;
+  color: var(--my-txt, #fff) !important;
+}
+.phone-container.theme-custom .my-msg-wrapper .message::after { border-left-color: var(--my-bg, #6c5ce7) !important; }
+.phone-container.theme-custom .other-msg-wrapper { align-self: flex-start; }
+.phone-container.theme-custom .other-msg-wrapper .message {
+  background: var(--other-bg, #fff) !important;
+  color: var(--other-txt, #333) !important;
+}
+.phone-container.theme-custom .other-msg-wrapper .message::after { border-right-color: var(--other-bg, #fff) !important; }
+.phone-container.theme-custom .name-tag { color: var(--name-txt, #555) !important; }
+.phone-container.theme-custom .system-msg { color: var(--system-txt, #888) !important; }
+.phone-container.theme-custom .date-divider span {
+  color: var(--date-txt, #fff) !important;
+  background: var(--date-bg, rgba(0,0,0,.1)) !important;
+}
+
+/* ===== 기본 테마 ===== */
+.theme-default .header { background: #6c5ce7; color: #fff; }
+.theme-default .chat-bg-layer { background: #e9e9f3; }
+.theme-default .my-msg-wrapper { align-self: flex-end; }
+.theme-default .my-msg-wrapper .message { background: #6c5ce7; color: #fff; border-bottom-right-radius: 0; }
+.theme-default .my-msg-wrapper .message::after { border-left-color: #6c5ce7; }
+.theme-default .other-msg-wrapper { align-self: flex-start; }
+.theme-default .other-msg-wrapper .message { background: #fff; color: #333; border-bottom-left-radius: 0; }
+.theme-default .other-msg-wrapper .message::after { border-right-color: #fff; }
+
+/* ===== 카카오 테마 ===== */
+.theme-kakao .header { background: #A9BDCE; color: #333; }
+.theme-kakao .chat-bg-layer { background: #b2c7d9; }
+.theme-kakao .my-msg-wrapper { align-self: flex-end; }
+.theme-kakao .my-msg-wrapper .message { background: #ffeb3b; color: #333; border-radius: 4px; border-bottom-right-radius: 0; }
+.theme-kakao .my-msg-wrapper .message::after { border-left-color: #ffeb3b; }
+.theme-kakao .other-msg-wrapper { align-self: flex-start; }
+.theme-kakao .other-msg-wrapper .message { background: #fff; color: #333; border-radius: 4px; border-bottom-left-radius: 0; }
+.theme-kakao .other-msg-wrapper .message::after { border-right-color: #fff; }
+
+/* ===== 라인 테마 ===== */
+.theme-line .header { background: #2c3e50; color: #fff; }
+.theme-line .chat-bg-layer { background: #7289DA; }
+.theme-line .my-msg-wrapper { align-self: flex-end; }
+.theme-line .my-msg-wrapper .message { background: #85E249; color: #333; border-bottom-right-radius: 0; }
+.theme-line .my-msg-wrapper .message::after { border-left-color: #85E249; }
+.theme-line .other-msg-wrapper { align-self: flex-start; }
+.theme-line .other-msg-wrapper .message { background: #fff; color: #333; border-bottom-left-radius: 0; }
+.theme-line .other-msg-wrapper .message::after { border-right-color: #fff; }
+
+/* ===== 모노 테마 ===== */
+.theme-mono .header { background: #222; color: #fff; }
+.theme-mono .chat-bg-layer { background: #f5f5f5; }
+.theme-mono .my-msg-wrapper { align-self: flex-end; }
+.theme-mono .my-msg-wrapper .message { background: #333; color: #fff; border-radius: 0; }
+.theme-mono .my-msg-wrapper .message::after { border-left-color: #333; }
+.theme-mono .other-msg-wrapper { align-self: flex-start; }
+.theme-mono .other-msg-wrapper .message { background: #fff; color: #333; border: 1px solid #ccc; border-radius: 0; }
+.theme-mono .other-msg-wrapper .message::after { border-right-color: #fff; }`;
+
+        // 본문 HTML을 들여쓰기로 정리
+        const bodyHtml = formatHtml(c.outerHTML);
+        // 본문 들여쓰기를 4칸으로 (body 안쪽이므로)
+        const bodyIndented = bodyHtml.split('\n').map(l=>'    '+l).join('\n');
+        // CSS 들여쓰기 (style 태그 안쪽이므로 4칸)
+        const cssIndented = css.split('\n').map(l=>l?'      '+l:'').join('\n');
+
+        const full = `<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Chat</title>
+  <style>
+${cssIndented}
+  </style>
+</head>
+<body>
+${bodyIndented}
+</body>
+</html>`;
+
         navigator.clipboard.writeText(full).then(()=>showToast('📋 HTML 복사!','success')).catch(()=>showToast('복사 실패','error'));
     }
 

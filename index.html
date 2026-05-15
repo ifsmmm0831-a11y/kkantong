@@ -7,6 +7,10 @@
 <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
 <style>
     @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&display=swap');
+    @import url('https://fonts.googleapis.com/css2?family=Nanum+Gothic:wght@400;700&family=Nanum+Myeongjo:wght@400;700&display=swap');
+    @import url('https://cdn.jsdelivr.net/npm/ridibatang@0.0.1/ridibatang.css');
+    @import url('https://cdn.jsdelivr.net/gh/niceplugin/GangwonEduAll-otf@v0.0.1/gangwon-edu-all.css');
+    @import url('https://fastly.jsdelivr.net/gh/projectnoonnu/2408-4@latest/ONGLEUBParkDaHyun.css');
 
     * { box-sizing: border-box; }
 
@@ -278,6 +282,26 @@
             <option value="theme-line">💚 라인 (초록)</option>
             <option value="theme-mono">🖤 모노 (흑백)</option>
             <option value="theme-custom">🎨 커스텀 (직접 꾸미기)</option>
+        </select>
+    </div>
+    <div>
+        <label for="fontSelector">글꼴 선택</label>
+        <select id="fontSelector">
+            <option value="">🔤 기본 (설정없음)</option>
+            <option value="malgun" style="font-family:'Malgun Gothic','맑은 고딕'">맑은 고딕</option>
+            <option value="nanum-gothic" style="font-family:'Nanum Gothic'">나눔고딕</option>
+            <option value="nanum-myeongjo" style="font-family:'Nanum Myeongjo'">나눔명조</option>
+            <option value="ridi-batang" style="font-family:'RIDIBatang'">리디바탕</option>
+            <option value="gangwon-edu" style="font-family:'GangwonEduAll'">강원교육모두체</option>
+            <option value="ongleub-parkdahyun" style="font-family:'ONGLEUBParkDaHyun'">온글잎박다현체</option>
+            <option value="dotum" style="font-family:'Dotum','돋움'">돋움</option>
+            <option value="gulim" style="font-family:'Gulim','굴림'">굴림</option>
+            <option value="batang" style="font-family:'Batang','바탕'">바탕</option>
+            <option value="gungsuh" style="font-family:'Gungsuh','궁서'">궁서</option>
+            <option value="arial" style="font-family:Arial">Arial</option>
+            <option value="times" style="font-family:'Times New Roman'">Times New Roman</option>
+            <option value="georgia" style="font-family:Georgia">Georgia</option>
+            <option value="courier" style="font-family:'Courier New'">Courier New</option>
         </select>
     </div>
     <div style="margin-top:5px;">
@@ -692,6 +716,38 @@
     // ===== 테마 =====
     const CCI={'--header-bg':'customHeaderBg','--header-txt':'customHeaderTxt','--chat-bg':'customChatBg','--phone-border':'customBorderCol','--my-bg':'customMyBg','--my-txt':'customMyTxt','--other-bg':'customOtherBg','--other-txt':'customOtherTxt','--name-txt':'customNameTxt','--system-txt':'customSystemTxt','--date-bg':'customDateBg','--date-txt':'customDateTxt'};
     const TCM={hBg:'customHeaderBg',hTxt:'customHeaderTxt',cBg:'customChatBg',bCol:'customBorderCol',mBg:'customMyBg',mTxt:'customMyTxt',oBg:'customOtherBg',oTxt:'customOtherTxt',nTxt:'customNameTxt',sTxt:'customSystemTxt',dBg:'customDateBg',dTxt:'customDateTxt'};
+    const FONT_MAP={
+        '':["'Noto Sans KR', sans-serif",""],
+        'malgun':["'Malgun Gothic','맑은 고딕', sans-serif",""],
+        'nanum-gothic':["'Nanum Gothic', sans-serif","https://fonts.googleapis.com/css2?family=Nanum+Gothic:wght@400;700&display=swap"],
+        'nanum-myeongjo':["'Nanum Myeongjo', serif","https://fonts.googleapis.com/css2?family=Nanum+Myeongjo:wght@400;700&display=swap"],
+        'ridi-batang':["'RIDIBatang', serif","https://cdn.jsdelivr.net/npm/ridibatang@0.0.1/ridibatang.css"],
+        'gangwon-edu':["'GangwonEduAll', sans-serif","https://cdn.jsdelivr.net/gh/niceplugin/GangwonEduAll-otf@v0.0.1/gangwon-edu-all.css"],
+        'ongleub-parkdahyun':["'ONGLEUBParkDaHyun', sans-serif","https://fastly.jsdelivr.net/gh/projectnoonnu/2408-4@latest/ONGLEUBParkDaHyun.css"],
+        'dotum':["'Dotum','돋움', sans-serif",""],
+        'gulim':["'Gulim','굴림', sans-serif",""],
+        'batang':["'Batang','바탕', serif",""],
+        'gungsuh':["'Gungsuh','궁서', serif",""],
+        'arial':["Arial, sans-serif",""],
+        'times':["'Times New Roman', serif",""],
+        'georgia':["Georgia, serif",""],
+        'courier':["'Courier New', monospace",""]
+    };
+    function applyFont(){
+        const v=$('fontSelector').value;
+        const f=FONT_MAP[v];
+        if(f){els.phone.style.fontFamily=f[0];}
+    }
+    function getCurrentFontFamily(){
+        const v=$('fontSelector').value;
+        const f=FONT_MAP[v];
+        return f?f[0]:"'Noto Sans KR', sans-serif";
+    }
+    function getCurrentFontImport(){
+        const v=$('fontSelector').value;
+        const f=FONT_MAP[v];
+        return f?f[1]:"";
+    }
     function changeTheme(){
         const t=els.theme.value, pc=els.phone;
         // 테마 클래스만 교체 (bubble 클래스 유지)
@@ -1004,7 +1060,12 @@
         // 부모 flex 컨테이너로 작동해 말풍선이 세로로 늘어나는 문제 발생.
         // 따라서 body 스타일은 사용하지 않고 .phone-container에 폰트만 지정.
         let css = `@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&display=swap');
+`;
+        // 선택한 글꼴의 추가 import
+        const fontImport = getCurrentFontImport();
+        if(fontImport) css += `@import url('${fontImport}');\n`;
 
+        css += `
 /* ===== 폰 컨테이너 ===== */
 .phone-container {
   box-sizing: border-box;
@@ -1013,7 +1074,7 @@
   margin: 0 auto;
   overflow: hidden;
   background: #fff;
-  font-family: 'Noto Sans KR', sans-serif;
+  font-family: ${getCurrentFontFamily()};
 }
 
 /* ===== 헤더 ===== */
@@ -1343,6 +1404,7 @@ ${bodyIndented}
     function bind(){
         els.roomName.addEventListener('input',updateRoomName);
         els.theme.addEventListener('change',changeTheme);
+        $('fontSelector').addEventListener('change',applyFont);
         els.chkBorder.addEventListener('change',toggleBorder);
         $qa('input[name="msgType"]').forEach(r=>r.addEventListener('change',()=>{toggleInputs();syncQuickBar();}));
         for(const id of Object.values(CCI))$(id).addEventListener('input',updateCustomTheme);
@@ -1397,7 +1459,7 @@ ${bodyIndented}
         setupQuickBar();
     }
 
-    function init(){ bind(); toggleInputs(); changeTheme(); toggleBorder(); applyPhoneWidth(); applyContainerMode(); applyBubbleShape(); updateMsgCount(); }
+    function init(){ bind(); toggleInputs(); changeTheme(); toggleBorder(); applyPhoneWidth(); applyContainerMode(); applyBubbleShape(); applyFont(); updateMsgCount(); }
     init();
 })();
 </script>

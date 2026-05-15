@@ -1095,12 +1095,18 @@
 
     function copyHtml(){
         const c=els.phone.cloneNode(true);c.querySelectorAll('.btn-msg-delete,.editing').forEach(k=>k.remove());c.classList.remove('editing');
-        const ib=els.chkBorder.checked,ic=els.theme.value==='theme-custom';let bc='#333';if(ic)bc=$('customBorderCol').value;
+        // 프리셋 선택 시 실제 기본 테마 판별
+        let actualTheme=els.theme.value;
+        if(actualTheme.startsWith('preset:')){
+            const p=getPresets()[actualTheme.substring(7)];
+            actualTheme=(p&&p.theme)?p.theme:'theme-custom';
+        }
+        const ib=els.chkBorder.checked,ic=actualTheme==='theme-custom';let bc='#333';if(ic)bc=$('customBorderCol').value;
         c.style.border=ib?`8px solid ${bc}`:'none';if(ib){c.style.borderRadius='30px';c.style.backgroundColor='#fff';c.style.boxShadow='0 5px 15px rgba(0,0,0,0.1)';}else{c.style.borderRadius='0';c.style.backgroundColor='transparent';c.style.boxShadow='none';}
         const a=c.querySelector('.chat-area');if(a){a.classList.remove('scroll-mode');a.style.maxHeight='';a.style.overflow='';}
 
         // ===== 현재 사용 중인 테마/말풍선만 추출 =====
-        const themeName = els.theme.value; // 예: 'theme-default'
+        const themeName = actualTheme;
         // 말풍선 모양 클래스 찾기
         let bubbleClass = '';
         const bubbleClasses = ['bubble-round','bubble-square','bubble-cloud','bubble-flat','bubble-pill','bubble-custom'];
@@ -1341,45 +1347,58 @@
 }
 `;
         } else if(bubbleClass==='bubble-custom'){
+            const bR=$('cbRadius').value+'px';
+            const bPV=$('cbPadV').value+'px', bPH=$('cbPadH').value+'px';
+            const bSh=parseFloat($('cbShadow').value)>0?`0 ${$('cbShadow').value}px ${parseInt($('cbShadow').value)*2}px rgba(0,0,0,.1)`:'none';
+            const bBW=parseInt($('cbBorderW').value), bBC=$('cbBorderColor').value;
+            const bBorder=bBW>0?`${bBW}px solid ${bBC}`:'none';
+            const bMyC=$('cbMyCorner').value+'px', bOtherC=$('cbOtherCorner').value+'px';
             css += `
 /* ===== 말풍선 모양: 커스텀 ===== */
 .phone-container.bubble-custom .message {
-  border-radius: var(--bubble-radius, 15px) !important;
-  padding: var(--bubble-pad-v, 10px) var(--bubble-pad-h, 14px) !important;
-  box-shadow: var(--bubble-shadow, 0 1px 1px rgba(0,0,0,.1)) !important;
-  border: var(--bubble-border, none) !important;
+  border-radius: ${bR} !important;
+  padding: ${bPV} ${bPH} !important;
+  box-shadow: ${bSh} !important;
+  border: ${bBorder} !important;
 }
-.phone-container.bubble-custom .my-msg-wrapper .message { border-bottom-right-radius: var(--bubble-my-corner, 0) !important; }
-.phone-container.bubble-custom .other-msg-wrapper .message { border-bottom-left-radius: var(--bubble-other-corner, 0) !important; }
+.phone-container.bubble-custom .my-msg-wrapper .message { border-bottom-right-radius: ${bMyC} !important; }
+.phone-container.bubble-custom .other-msg-wrapper .message { border-bottom-left-radius: ${bOtherC} !important; }
 `;
         }
 
         // ===== 테마 (사용 중인 것만) =====
         if(themeName==='theme-custom'){
+            // CSS 변수 대신 실제 색상값을 직접 삽입
+            const hBg=$('customHeaderBg').value, hTxt=$('customHeaderTxt').value;
+            const cBg=$('customChatBg').value;
+            const mBg=$('customMyBg').value, mTxt=$('customMyTxt').value;
+            const oBg=$('customOtherBg').value, oTxt=$('customOtherTxt').value;
+            const nTxt=$('customNameTxt').value, sTxt=$('customSystemTxt').value;
+            const dBg=$('customDateBg').value, dTxt=$('customDateTxt').value;
             css += `
 /* ===== 커스텀 테마 ===== */
 .phone-container.theme-custom .header {
-  background: var(--header-bg, #6c5ce7) !important;
-  color: var(--header-txt, #fff) !important;
+  background: ${hBg} !important;
+  color: ${hTxt} !important;
 }
-.phone-container.theme-custom .chat-bg-layer { background-color: var(--chat-bg, #e9e9f3) !important; }
+.phone-container.theme-custom .chat-bg-layer { background-color: ${cBg} !important; }
 .phone-container.theme-custom .my-msg-wrapper { align-self: flex-end; }
 .phone-container.theme-custom .my-msg-wrapper .message {
-  background: var(--my-bg, #6c5ce7) !important;
-  color: var(--my-txt, #fff) !important;
+  background: ${mBg} !important;
+  color: ${mTxt} !important;
 }
-.phone-container.theme-custom .my-msg-wrapper .message::after { border-left-color: var(--my-bg, #6c5ce7) !important; }
+.phone-container.theme-custom .my-msg-wrapper .message::after { border-left-color: ${mBg} !important; }
 .phone-container.theme-custom .other-msg-wrapper { align-self: flex-start; }
 .phone-container.theme-custom .other-msg-wrapper .message {
-  background: var(--other-bg, #fff) !important;
-  color: var(--other-txt, #333) !important;
+  background: ${oBg} !important;
+  color: ${oTxt} !important;
 }
-.phone-container.theme-custom .other-msg-wrapper .message::after { border-right-color: var(--other-bg, #fff) !important; }
-.phone-container.theme-custom .name-tag { color: var(--name-txt, #555) !important; }
-.phone-container.theme-custom .system-msg { color: var(--system-txt, #888) !important; }
+.phone-container.theme-custom .other-msg-wrapper .message::after { border-right-color: ${oBg} !important; }
+.phone-container.theme-custom .name-tag { color: ${nTxt} !important; }
+.phone-container.theme-custom .system-msg { color: ${sTxt} !important; }
 .phone-container.theme-custom .date-divider span {
-  color: var(--date-txt, #fff) !important;
-  background: var(--date-bg, rgba(0,0,0,.1)) !important;
+  color: ${dTxt} !important;
+  background: ${dBg} !important;
 }
 `;
         } else if(themeName==='theme-default'){
